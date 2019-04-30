@@ -1,5 +1,7 @@
 # Parse Genie
 
+[![Build Status](https://travis-ci.org/clay584/parse_genie.svg?branch=master)](https://travis-ci.org/clay584/parse_genie)
+
 The network genie filter takes unstructured network CLI command output from all
 Cisco Systems network operating systems, and outputs structured data. While similar to other
 network CLI parsers already available (parse_cli, parse_cli_textfsm), this parser is
