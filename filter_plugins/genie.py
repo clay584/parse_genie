@@ -5,6 +5,7 @@ __metaclass__ = type
 __author__ = "Clay Curtis"
 __license__ = "GPLv3"
 __email__ = "jccurtis@presidio.com"
+__version__ = "1.0"
 
 import sys
 
