@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: parse_genie
   author: Clay Curtis
-  description: Internet plumber, husband, father, person.
+  description: Filter plugin for network CLI parsing using Cisco's Genie/pyATS
   company: Presidio
 
   license: license (GPLv3)
