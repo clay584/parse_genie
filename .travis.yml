@@ -29,7 +29,7 @@ install:
 
 script:
   # Yaml Linting. Gotta get that 5/5 code quality score.
-  - yamllint -c yamllint_config.yml *
+  - yamllint -c ymllint_config.yml *
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax
   # Test the parser functionality in a playbook
