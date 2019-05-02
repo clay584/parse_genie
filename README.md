@@ -11,15 +11,76 @@ This provides over 500 parsers that transform configuration and CLI
 output to structured data that is normalized and conforms to standard, OS-agnostic data models.
 
 The Genie library can also serve as an engine to parse tabular and non-tabular free-form text
-    using much less code than traditional parsing requires. Therefore, it can be used to
-    parse any vendor output; not just that of Cisco devices. However, that would involve writing custom parsers.
-    This release does not include the functionality to utilize custom parsers. The supported parsers are whatever
-    is included in the release of Genie that the user has installed on the Ansible control machine.
+using much less code than traditional parsing requires. Therefore, it can be used to
+parse any vendor output; not just that of Cisco devices. However, that would involve writing custom parsers.
+This release does not include the functionality to utilize custom parsers. The supported parsers are whatever
+is included in the release of Genie that the user has installed on the Ansible control machine.
 
-To convert the output of a network device CLI command, use the ``parse_genie`` filter as shown in this example
+The list of supported operating systems and commands, as well
+as the data's schema definitions (data models) which describe exactly what fields and
+data types will be returned for any given command, is available from Cisco Systems at the link below.
+
+https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers
+
+## Prerequisites
+
+This plugin will require the following:
+
+1. Python 3.4+
+2. pyATS and Genie packages
+3. Ansible 2.7+ (It should work on older versions as long as the other requirements are satisfied)
+
+## Installation
+
+Please follow these instructions to ensure that the filter plugin will function with your playbooks:
+
+1. Create a directory for your playbook and go into it. `mkdir network_ops && cd network_ops`
+2. Create a virtual environment. `python3 -m venv .venv`
+3. Activate the virtual environment. `source .venv/bin/activate`
+4. Install Ansible. `pip install ansible`
+5. Install Genie and pyATS. `pip install genie`
+6. Install the parse_genie role from Ansible Galaxy. `ansible-galaxy install clay584.parse_genie`
+
+## Ansible to Genie OS Mappings
+
+Below are the mappings from Ansible's `ansible_network_os` to Genie's `os`:
+
+| Ansible Network OS  | Genie OS      |
+| ------------------- | ------------- |
+| ios                 | ios, iosxe    |
+| nxos                | nxos          |
+| iosxr               | iosxr         |
+| junos               | junos         |
+
+If you are working with IOS or IOS-XE there is ambiguity in that Ansible considers IOS and IOS-XE
+the same and therefore the `ansible_network_os = ios`, but Genie needs to know specifically if it is
+IOS or IOS-XE in order to parse the CLI output correctly. If you pass `ansible_network_os` to this filter plugin,
+and it is equal to `ios`, parse_genie will try to parse it with Genie using `os=ios` first, and if that fails, it will
+then try to parse it with `os=iosxe`.
+
+So keep that in mind when creating your playbooks. It may be best to pass the real OS to the parse_genie.
+You can do that by keeping another inventory variable or host_var to specify the Genie OS for each network device
+and using that variable as the OS for the parse_genie.
+
+### Usage
+
+Make sure to read in the parse_genie role before you attempt to use it later in your playbook.
+
+    ...trunctated...
+    
+	  tasks:
+	  - name: Read in parse_genie role
+		include_role:
+		  name: clay584.parse_genie
+		  
+    ...trunctated...
+
+
+### Short Example
+To convert the output of a network device CLI command, use the `parse_genie` filter as shown in this example
 (do not use abbreviated CLI commands).
 
-Converting CLI output of the ``show version`` command from a Cisco IOS-XE device to structured data::
+Converting CLI output of the `show version` command from a Cisco IOS-XE device to structured data::
 
     {{ cli_output | parse_genie(command='show version', os='iosxe') }}
 
@@ -68,7 +129,7 @@ The above example would yield the following:
         }
     }
 
-## Full Example #1
+### Full Example #1
 
 Playbook:
 
@@ -148,16 +209,16 @@ Playbook:
 
 Output:
 
-	$ ansible-playbook -i inventory debug.yml                                                                                                                                                                                                                   8721  11:38:13  
+	$ ansible-playbook -i inventory debug.yml
 	
-	PLAY [localhost] ******************************************************************************************************************************************************************************************************************************************************************
+	PLAY [localhost] *************************************************************************
 	
-	TASK [Gathering Facts] ************************************************************************************************************************************************************************************************************************************************************
+	TASK [Gathering Facts] *******************************************************************
 	ok: [localhost]
 	
-	TASK [Read in parse_genie role] ***************************************************************************************************************************************************************************************************************************************************
+	TASK [Read in parse_genie role] **********************************************************
 	
-	TASK [Debug Genie Filter] *********************************************************************************************************************************************************************************************************************************************************
+	TASK [Debug Genie Filter] ****************************************************************
 	ok: [localhost -> localhost] => {
 		"msg": {
 			"version": {
@@ -204,7 +265,7 @@ Output:
 	}
 
 
-## Full Example #2
+### Full Example #2
 
 Playbook:
 
@@ -229,16 +290,16 @@ Playbook:
 
 Output:
 
-	$ ansible-playbook -i inventory playbook.yml                                                                                                                                                                                                                8718  11:30:44  
+	$ ansible-playbook -i inventory playbook.yml
 	
-	PLAY [csr1000v] *******************************************************************************************************************************************************************************************************************************************************************
+	PLAY [csr1000v] **************************************************************************
 	
-	TASK [Read in parse_genie role] ***************************************************************************************************************************************************************************************************************************************************
+	TASK [Read in parse_genie role] **********************************************************
 	
-	TASK [Get Data From Device] *******************************************************************************************************************************************************************************************************************************************************
+	TASK [Get Data From Device] **************************************************************
 	ok: [csr1000v]
 	
-	TASK [Print Structured Data] ******************************************************************************************************************************************************************************************************************************************************
+	TASK [Print Structured Data] *************************************************************
 	ok: [csr1000v -> localhost] => {
 		"msg": {
 			"interfaces": {
@@ -268,14 +329,19 @@ Output:
 		}
 	}
 
+## Development
 
+Set up your development environment:
 
+1. Clone the repo and go into it. `git clone https://github.com/clay584/parse_genie.git && cd parse_genie`
+2. Create a virtual environment. `python3 -m venv .venv`
+3. Activate the virtual environment. `source .venv/bin/activate`
+4. Install Ansible. `pip install ansible`
+5. Install Genie and pyATS. `pip install genie`
 
+### Testing
 
+Run these commands to test locally:
 
-The list of supported operating systems and commands, as well
-as the data's schema definitions (data models) which describe exactly what fields and
-data types will be returned for any given command, is available from Cisco Systems at the link below.
-
-https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers
-
+1. Lint all of the YAML files. `yamllint -c yamllint_config.yml *`
+2. Run the test playbook. `ansible-playbook tests/test.yml --connection=local -i tests/inventory`

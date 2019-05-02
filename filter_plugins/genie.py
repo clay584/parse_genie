@@ -84,33 +84,44 @@ def parse_genie(cli_output, command=None, os=None):
             )
         )
 
-    # Boilerplate code to get the parser functional
-    # tb = Testbed()
-    device = Device("new_device", os=os)
+    def _parse(raw_cli_output, cmd, nos):
+        # Boilerplate code to get the parser functional
+        # tb = Testbed()
+        device = Device("new_device", os=nos)
 
-    device.custom.setdefault("abstraction", {})["order"] = ["os"]
-    device.cli = AttrDict({"execute": None})
+        device.custom.setdefault("abstraction", {})["order"] = ["os"]
+        device.cli = AttrDict({"execute": None})
 
-    # User input checking of the command provided. Does the command have a Genie parser?
-    try:
-        get_parser(command, device)
-    except Exception as e:
-        raise AnsibleFilterError(
-            "genie_parse: {0} - Available parsers: {1}".format(
-                to_native(e), "https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers"
+        # User input checking of the command provided. Does the command have a Genie parser?
+        try:
+            get_parser(cmd, device)
+        except Exception as e:
+            raise AnsibleFilterError(
+                "genie_parse: {0} - Available parsers: {1}".format(
+                    to_native(e), "https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers"
+                )
             )
-        )
+
+        try:
+            parsed_output = device.parse(cmd, output=raw_cli_output)
+            return parsed_output
+        except Exception as e:
+            raise AnsibleFilterError(
+                "genie_parse: {0} - Failed to parse command output.".format(
+                    to_native(e)
+                )
+            )
 
     # Try to parse the output
-    try:
-        parsed_output = device.parse(command, output=cli_output)
-        return parsed_output
-    except Exception as e:
-        raise AnsibleFilterError(
-            "genie_parse: {0} - Failed to parse command output.".format(
-                to_native(e)
-            )
-        )
+    # If OS is IOS, ansible could have passed in IOS, but the Genie device-type is actually IOS-XE,
+    # so we will try to parse both.
+    if os == "ios":
+        try:
+            return _parse(cli_output, command, "ios")
+        except Exception:
+            return _parse(cli_output, command, "iosxe")
+    else:
+        return _parse(cli_output, command, os)
 
 
 class FilterModule(object):

@@ -18,6 +18,9 @@ install:
   # Install Genie
   - pip install genie
 
+  # Install yamllint
+  - pip install yamllint
+
   # Check ansible version
   - ansible --version
 
@@ -25,8 +28,11 @@ install:
   - printf '[defaults]\nroles_path=../\nfilter_plugins=../filter_plugins' >ansible.cfg
 
 script:
+  # Yaml Linting. Gotta get that 5/5 code quality score.
+  - yamllint -c yamllint_config.yml *
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax
+  # Test the parser functionality in a playbook
   - ansible-playbook tests/test.yml --connection=local -i tests/inventory
 
 notifications:
