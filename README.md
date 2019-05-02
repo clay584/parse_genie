@@ -338,6 +338,7 @@ Set up your development environment:
 3. Activate the virtual environment. `source .venv/bin/activate`
 4. Install Ansible. `pip install ansible`
 5. Install Genie and pyATS. `pip install genie`
+6. Install yamllint. `pip install yamllint`
 
 ### Testing
 
@@ -345,3 +346,12 @@ Run these commands to test locally:
 
 1. Lint all of the YAML files. `yamllint -c yamllint_config.yml *`
 2. Run the test playbook. `ansible-playbook tests/test.yml --connection=local -i tests/inventory`
+
+### Pushing
+
+Ansible Galaxy works on tags.
+
+1. `git commit -m"whatever'`
+2. `git tag -a X.X.X` - where X.X.X is a symantec versioning number.
+3. `git push origin master`
+4. `git push X.X.X`
