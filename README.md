@@ -1,7 +1,14 @@
 # Parse Genie
 
+[![Published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/clay584/parse_genie)
+
+![Ansible Role](https://img.shields.io/ansible/role/40061.svg?color=orange&label=ansible%20role&style=popout)
+![Ansible Version](https://img.shields.io/badge/ansible-%3E%3D2.7-blue.svg)
+![Python Version](https://img.shields.io/badge/python-%3E%3D3.4-blue.svg)
+
 [![Build Status](https://travis-ci.org/clay584/parse_genie.svg?branch=master)](https://travis-ci.org/clay584/parse_genie)
-[![published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/clay584/parse_genie)
+![Ansible Quality Score](https://img.shields.io/ansible/quality/40061.svg?label=code%20quality&style=popout)
+
 
 The network genie filter takes unstructured network CLI command output from all
 Cisco Systems network operating systems, and outputs structured data. While similar to other
