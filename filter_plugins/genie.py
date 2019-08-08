@@ -59,19 +59,19 @@ def parse_genie(cli_output, command=None, os=None):
     # Is the CLI output a string?
     if not isinstance(cli_output, string_types):
         raise AnsibleError(
-            "The content provided to the genie_parse filter was not a string."
+            "The content provided to the parse_genie filter was not a string."
         )
 
     # Is the command a string?
     if not isinstance(command, string_types):
         raise AnsibleFilterError(
-            "The command provided to the genie_parse filter was not a string."
+            "The command provided to the parse_genie filter was not a string."
         )
 
     # Is the OS a string?
     if not isinstance(os, string_types):
         raise AnsibleFilterError(
-            "The network OS provided to the genie_parse filter was not a string."
+            "The network OS provided to the parse_genie filter was not a string."
         )
 
     # Is the OS provided by the user a supported OS by Genie?
@@ -79,7 +79,7 @@ def parse_genie(cli_output, command=None, os=None):
     supported_oses = ["ios", "iosxe", "iosxr", "junos", "nxos"]
     if os.lower() not in supported_oses:
         raise AnsibleFilterError(
-            "The network OS provided ({0}) to the genie_parse filter is not a supported OS in Genie.".format(
+            "The network OS provided ({0}) to the parse_genie filter is not a supported OS in Genie.".format(
                 os
             )
         )
@@ -97,7 +97,7 @@ def parse_genie(cli_output, command=None, os=None):
             get_parser(cmd, device)
         except Exception as e:
             raise AnsibleFilterError(
-                "genie_parse: {0} - Available parsers: {1}".format(
+                "parse_genie: {0} - Available parsers: {1}".format(
                     to_native(e), "https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers"
                 )
             )
@@ -107,7 +107,7 @@ def parse_genie(cli_output, command=None, os=None):
             return parsed_output
         except Exception as e:
             raise AnsibleFilterError(
-                "genie_parse: {0} - Failed to parse command output.".format(
+                "parse_genie: {0} - Failed to parse command output.".format(
                     to_native(e)
                 )
             )
