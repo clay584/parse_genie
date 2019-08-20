@@ -10,6 +10,8 @@
 ![Ansible Quality Score](https://img.shields.io/ansible/quality/40061.svg?label=code%20quality&style=popout)
 
 
+**ATTENTION!!! - If you run into an issue with a command failing to parse, it is possible that there is a bug in the parsing library which is maintained by Cisco. For those issues, you can open an issue [here](https://github.com/CiscoTestAutomation/genieparser/issues).**
+
 The network genie filter takes unstructured network CLI command output from all
 Cisco network operating systems, and outputs structured data. While similar to other
 network CLI parsers already available (parse_cli, parse_cli_textfsm), this parser is
