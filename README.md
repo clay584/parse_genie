@@ -338,6 +338,338 @@ Output:
 		}
 	}
 
+## Generic Tabular Parsing
+
+Cisco Genie has support for 1200 commands and counting, but for those show commands where there is not 
+a parser that has been built by Cisco, there is the generic tabular parsing functionality. For more 
+information on the Genie tabular parsing functionality, see their [oper_fill_tabular](https://pubhub.devnetcloud.com/media/pyats-packages/docs/parsergen/tabular/tabular.html) documentation.
+
+### How Tabular Parsing Works
+
+In order to parse a command output when there is a parser that has been built, all that is required is the `command`, `command ouput`, and `os`. 
+But if there is not a parser built, you must specify some additional information to help the parser determine how 
+to parse the command output. This additional data is two-fold:
+
+1. Headers - The column headers as shown in the command's output.
+2. Index - The key of the dictionary items that the parser will return.
+
+Consider the following example:
+
+1. Command: `show ip sla summary`
+2. Command Output:
+
+```
+IPSLAs Latest Operation Summary
+Codes: * active, ^ inactive, ~ pending
+All Stats are in milliseconds. Stats with u are in microseconds
+
+ID           Type           Destination       Stats               Return        Last
+                                                                  Code          Run
+------------------------------------------------------------------------------------------------
+*1           udp-jitter      10.0.0.2          RTT=900u           OK             20 seconds ago
+*2           icmp-echo       10.0.0.2          RTT=1              OK              3 seconds ago
+```
+3. Headers - `ID`, `Type`, `Destination`, `Stats`, `Return Code`, and `Last Run`.
+4. Index - We want to use the `ID` column as the index for this data when we get it back from the parser.
+5. Parser Output:
+
+```
+{'*1': {'Destination ': '10.0.0.2',
+        'ID ': '*1',
+        'Last Run': '20 seconds ago',
+        'Return Code': 'OK',
+        'Stats ': 'RTT=900u',
+        'Type ': 'udp-jitter'},
+ '*2': {'Destination ': '10.0.0.2',
+        'ID ': '*2',
+        'Last Run': '3 seconds ago',
+        'Return Code': 'OK',
+        'Stats ': 'RTT=1',
+        'Type ': 'icmp-echo'}}
+
+```
+
+### Preparing to Use the Tabular Parser
+
+In order to use this tabular parser we must first construct the `headers` and `index` for a given command on 
+a given OS in a format that can be read into an Ansible playbook, and subsequently fed into the parse_genie filter plugin.
+
+In order to do this, you must create a vars file in your playbook that is in the following format. It is 
+organized by OS, then by command. Then under each command, the headers and index are defined. You can 
+define as many commands as you like for each network OS as long as it is within this data structure.
+
+```
+parse_genie:
+  ios:
+    "show ip sla summary":
+      headers:
+        - - ID
+          - Type
+          - Destination
+          - Stats
+          - Return
+          - Last
+        - - ''
+          - ''
+          - ''
+          - ''
+          - Code
+          - Run
+      index:
+        - 0
+  iosxe:
+    "show ip sla summary":
+      headers:
+        - - ID
+          - Type
+          - Destination
+          - Stats
+          - Return
+          - Last
+        - - ''
+          - ''
+          - ''
+          - ''
+          - Code
+          - Run
+      index:
+        - 1
+
+```
+
+The python equivalent of the above yaml format is:
+
+```
+python_dict = {
+  "parse_genie": {
+    "ios": {
+      "show ip sla summary": {
+        "headers": [
+          [
+            "ID", 
+            "Type", 
+            "Destination", 
+            "Stats", 
+            "Return", 
+            "Last"
+          ], 
+          [
+            "", 
+            "", 
+            "", 
+            "", 
+            "Code", 
+            "Run"
+          ]
+        ], 
+        "index": [
+          0
+        ]
+      }
+    }, 
+    "iosxe": {
+      "show ip sla summary": {
+        "headers": [
+          [
+            "ID", 
+            "Type", 
+            "Destination", 
+            "Stats", 
+            "Return", 
+            "Last"
+          ], 
+          [
+            "", 
+            "", 
+            "", 
+            "", 
+            "Code", 
+            "Run"
+          ]
+        ], 
+        "index": [
+          1
+        ]
+      }
+    }
+  }
+}
+```
+
+### Calling the Tabular Parser in a Playbook
+
+Now that we have defined a generic tabular command and its headers and index, we can actually call 
+it from a playbook.
+
+First, we read in the vars file that contains the tabular command parsing metadata.
+
+```
+- name: Include vars file with generic command metadata
+  include_vars:
+    file: parse_genie_generic_commands.yml
+    name: parse_genie
+```
+
+Next, we pass the command output to `parse_genie` but with a couple of extra parameters.
+
+```
+- name: Parse generic tabular command output
+  debug:
+    msg: "{{ command_output | parse_genie(command='show ip sla summary', os='ios', generic_tabular=True, generic_tabular_metadata=parse_genie) }}"
+  delegate_to: localhost
+```
+
+The resulting parsed output will show as follows:
+
+```
+ok: [localhost -> localhost] => {
+    "msg": {
+        "*1": {
+            "Destination ": "10.0.0.2",
+            "ID ": "*1",
+            "Last Run": "20 seconds ago",
+            "Return Code": "OK",
+            "Stats ": "RTT=900u",
+            "Type ": "udp-jitter"
+        },
+        "*2": {
+            "Destination ": "10.0.0.2",
+            "ID ": "*2",
+            "Last Run": "3 seconds ago",
+            "Return Code": "OK",
+            "Stats ": "RTT=1",
+            "Type ": "icmp-echo"
+        }
+    }
+}
+```
+
+### Full Example #1
+
+Playbook:
+
+```
+
+---
+
+- hosts: localhost
+  connection: local
+  vars:
+    out_ios_sla: |
+      IPSLAs Latest Operation Summary
+      Codes: * active, ^ inactive, ~ pending
+      All Stats are in milliseconds. Stats with u are in microseconds
+
+      ID           Type           Destination       Stats               Return        Last
+                                                                        Code          Run
+      ------------------------------------------------------------------------------------------------
+      *1           udp-jitter      10.0.0.2          RTT=900u           OK             20 seconds ago
+      *2           icmp-echo       10.0.0.2          RTT=1              OK              3 seconds ago
+
+  tasks:
+    - name: Include Parse Genie Role
+      include_role:
+        name: clay584.parse_genie
+
+    - name: Include vars file that has generic tabular command metadata
+      include_vars:
+        file: parse_genie_generic_commands.yml
+        name: parse_genie
+
+    - name: Test Genie Filter for generic tabular data
+      debug:
+        msg: "{{ out_ios_sla | parse_genie(command='test show ip sla summary', os='ios', generic_tabular=True, generic_tabular_metadata=parse_genie) }}"
+      delegate_to: localhost
+
+```
+
+`parse_genie_generic_commands.yml` contents:
+
+```
+
+---
+
+parse_genie:
+  ios:
+    "test show ip sla summary":
+      headers:
+        - - ID
+          - Type
+          - Destination
+          - Stats
+          - Return
+          - Last
+        - - ''
+          - ''
+          - ''
+          - ''
+          - Code
+          - Run
+      index:
+        - 0
+  iosxe:
+    "test show ip sla summary":
+      headers:
+        - - ID
+          - Type
+          - Destination
+          - Stats
+          - Return
+          - Last
+        - - ''
+          - ''
+          - ''
+          - ''
+          - Code
+          - Run
+      index:
+        - 1
+
+```
+
+Playbook Output:
+
+```
+
+PLAY [localhost] ******************************************************************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ************************************************************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [Include Parse Genie Role] ***************************************************************************************************************************************************************************************************************************************************
+
+TASK [Include vars] ***************************************************************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [Test Genie Filter for generic tabular data] *********************************************************************************************************************************************************************************************************************************
+ok: [localhost -> localhost] => {
+    "msg": {
+        "*1": {
+            "Destination ": "10.0.0.2",
+            "ID ": "*1",
+            "Last Run": "20 seconds ago",
+            "Return Code": "OK",
+            "Stats ": "RTT=900u",
+            "Type ": "udp-jitter"
+        },
+        "*2": {
+            "Destination ": "10.0.0.2",
+            "ID ": "*2",
+            "Last Run": "3 seconds ago",
+            "Return Code": "OK",
+            "Stats ": "RTT=1",
+            "Type ": "icmp-echo"
+        }
+    }
+}
+
+PLAY RECAP ************************************************************************************************************************************************************************************************************************************************************************
+localhost                  : ok=3    changed=0    unreachable=0    failed=0   
+
+```
+
+
+
 ## Development
 
 Set up your development environment:

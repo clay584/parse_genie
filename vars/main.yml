@@ -1,2 +1,38 @@
 ---
 # vars file for parse_genie
+
+parse_genie:
+  ios:
+    "test show ip sla summary":
+      headers:
+        - - ID
+          - Type
+          - Destination
+          - Stats
+          - Return
+          - Last
+        - - ''
+          - ''
+          - ''
+          - ''
+          - Code
+          - Run
+      index:
+        - 0
+  iosxe:
+    "test show ip sla summary":
+      headers:
+        - - ID
+          - Type
+          - Destination
+          - Stats
+          - Return
+          - Last
+        - - ''
+          - ''
+          - ''
+          - ''
+          - Code
+          - Run
+      index:
+        - 1

@@ -26,11 +26,48 @@
       NAME: "One port Fastethernet TX", DESCR: "One port Fastethernet TX"
       PID: NM-1FE-TX=        , VID: 1.0, SN: 7720321
 
+    out_ios_sla: |
+      IPSLAs Latest Operation Summary
+      Codes: * active, ^ inactive, ~ pending
+      All Stats are in milliseconds. Stats with u are in microseconds
+
+      ID           Type           Destination       Stats               Return        Last
+                                                                        Code          Run
+      ------------------------------------------------------------------------------------------------
+      *1           udp-jitter      10.0.0.2          RTT=900u           OK             20 seconds ago
+      *2           icmp-echo       10.0.0.2          RTT=1              OK              3 seconds ago
+
+#    parse_genie:
+#      - name: "ip_sla"
+#        command: "show ip sla summary"
+#        headers:
+#          - - ID
+#            - Type
+#            - Destination
+#            - Stats
+#            - Return
+#            - Last
+#          - - ''
+#            - ''
+#            - ''
+#            - ''
+#            - Code
+#            - Run
+#        index:
+#          - 1
+
+
 
   tasks:
     - name: Include Parse Genie Role
       include_role:
         name: parse_genie
+
+    - name: Include vars
+      include_vars:
+        file: ../vars/main.yml
+        name: parse_genie
+
     - name: Test Genie Filter for IOS-XE output using IOS as OS
       debug:
         msg: "{{ out_iosxe | parse_genie(command='show inventory', os='ios') }}"  # yamllint disable-line rule:line-length
@@ -44,4 +81,9 @@
     - name: Test Genie Filter for IOS output using IOS as OS
       debug:
         msg: "{{ out_ios | parse_genie(command='show inventory', os='ios') }}"  # yamllint disable-line rule:line-length
+      delegate_to: localhost
+
+    - name: Test Genie Filter for generic tabular data
+      debug:
+        msg: "{{ out_ios_sla | parse_genie(command='test show ip sla summary', os='ios', generic_tabular=True, generic_tabular_metadata=parse_genie) }}"  # yamllint disable-line rule:line-length
       delegate_to: localhost

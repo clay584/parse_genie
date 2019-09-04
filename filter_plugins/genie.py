@@ -17,6 +17,7 @@ from ansible.utils.display import Display
 try:
     from genie.conf.base import Device, Testbed
     from genie.libs.parser.utils import get_parser
+    from genie import parsergen
     HAS_GENIE = True
 except ImportError:
     HAS_GENIE = False
@@ -31,12 +32,17 @@ except ImportError:
 display = Display()
 
 
-def parse_genie(cli_output, command=None, os=None):
+def parse_genie(cli_output, command=None, os=None, generic_tabular=False, generic_tabular_name=None, generic_tabular_metadata=None):
     """
     Uses the Cisco pyATS/Genie library to parse cli output into structured data.
     :param cli_output: (String) CLI output from Cisco device
     :param command: (String) CLI command that was used to generate the cli_output
     :param os: (String) Operating system of the device for which cli_output was obtained.
+    :param generic_tabular: (Boolean) If the output being passed in is generic tabular output for which
+    we don't have a parser, we will try to parse with a generic tabular parser.
+    :param generic_tabular_metadata: (dict) If it is generic tabular data, we will need metadata in order
+    to parse the data. This dict contains tabular data table headers, indexes, and other data needed
+    in order for Genie to parse the tabular data.
     :return: Dict object conforming to the defined genie parser schema.
              https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers/show%20version
     """
@@ -112,16 +118,59 @@ def parse_genie(cli_output, command=None, os=None):
                 )
             )
 
-    # Try to parse the output
-    # If OS is IOS, ansible could have passed in IOS, but the Genie device-type is actually IOS-XE,
-    # so we will try to parse both.
-    if os == "ios":
+    def _parse_generic_tabular(cli_output, os, headers, key_index):
+        # Boilerplate code to get the parser functional
+        tb = Testbed()
+        device = Device("new_device", os=os)
+
+        device.custom.setdefault("abstraction", {})["order"] = ["os"]
+        device.cli = AttrDict({"execute": None})
+
+        # Do the parsing
+        # result = parsergen.oper_fill_tabular(device_output=cli_output, device_os=nos, header_
+        # fields=headers, index=[key])
+        result = parsergen.oper_fill_tabular(device_output=cli_output,
+                                             device_os=os,
+                                             header_fields=headers,
+                                             index=key_index)
+
+        # Structured data, but it has a blank entry because of the first line of the output
+        # being blank under the headers.
+        parsed_output = result.entries
+
+        return parsed_output
+
+    # If tabular data without a parser, we will try to parse with a generic parser
+    if generic_tabular:
+        # raise AnsibleFilterError(to_native(generic_tabular_metadata))
         try:
-            return _parse(cli_output, command, "ios")
-        except Exception:
-            return _parse(cli_output, command, "iosxe")
+            headers = generic_tabular_metadata["parse_genie"][os][command]["headers"]
+            index = generic_tabular_metadata["parse_genie"][os][command]["index"]
+        except Exception as e:
+            raise AnsibleFilterError(
+                "parse_genie: {0} - Failed to parse generic_tabular_metadata.".format(
+                    to_native(e)
+                ))
+
+        structured_data = _parse_generic_tabular(cli_output, os, headers, index)
+        if structured_data:
+            return _parse_generic_tabular(cli_output, os, headers, index)
+        else:
+            raise AnsibleFilterError(
+                "parse_genie: - Failed to parse tabular command output from '{}' command '{}'.".format(os, command))
+
     else:
-        return _parse(cli_output, command, os)
+        # If it is not generic output with no parser, we will parse it.
+        # Try to parse the output
+        # If OS is IOS, ansible could have passed in IOS, but the Genie device-type is actually IOS-XE,
+        # so we will try to parse both.
+        if os == "ios":
+            try:
+                return _parse(cli_output, command, "ios")
+            except Exception:
+                return _parse(cli_output, command, "iosxe")
+        else:
+            return _parse(cli_output, command, os)
 
 
 class FilterModule(object):
