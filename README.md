@@ -29,7 +29,7 @@ The list of supported operating systems and commands, as well
 as the data's schema definitions (data models) which describe exactly what fields and
 data types will be returned for any given command, is available from Cisco at the link below.
 
-https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers
+https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers
 
 ## Prerequisites
 
