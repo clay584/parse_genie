@@ -82,7 +82,7 @@ def parse_genie(cli_output, command=None, os=None, generic_tabular=False, generi
 
     # Is the OS provided by the user a supported OS by Genie?
     # Supported Genie OSes: https://github.com/CiscoTestAutomation/genieparser/tree/master/src/genie/libs/parser
-    supported_oses = ["ios", "iosxe", "iosxr", "junos", "nxos"]
+    supported_oses = ["asa", "bigip", "dnac", "ios", "iosxe", "iosxr", "junos", "linux", "nxos", "sros"]
     if os.lower() not in supported_oses:
         raise AnsibleFilterError(
             "The network OS provided ({0}) to the parse_genie filter is not a supported OS in Genie.".format(
