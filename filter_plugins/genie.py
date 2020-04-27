@@ -32,12 +32,19 @@ except ImportError:
 display = Display()
 
 
-def parse_genie(cli_output, command=None, os=None, generic_tabular=False, generic_tabular_name=None, generic_tabular_metadata=None):
+def parse_genie(cli_output,
+                command=None,
+                os=None,
+                platform=None,
+                generic_tabular=False,
+                generic_tabular_name=None,
+                generic_tabular_metadata=None):
     """
     Uses the Cisco pyATS/Genie library to parse cli output into structured data.
     :param cli_output: (String) CLI output from Cisco device
     :param command: (String) CLI command that was used to generate the cli_output
     :param os: (String) Operating system of the device for which cli_output was obtained.
+    :param platform: (String) Platform of the device. This is Optional.
     :param generic_tabular: (Boolean) If the output being passed in is generic tabular output for which
     we don't have a parser, we will try to parse with a generic tabular parser.
     :param generic_tabular_metadata: (dict) If it is generic tabular data, we will need metadata in order
@@ -90,10 +97,13 @@ def parse_genie(cli_output, command=None, os=None, generic_tabular=False, generi
             )
         )
 
-    def _parse(raw_cli_output, cmd, nos):
+    def _parse(raw_cli_output, cmd, nos, platform):
         # Boilerplate code to get the parser functional
         # tb = Testbed()
-        device = Device("new_device", os=nos)
+        if platform:
+            device = Device("new_device", os=nos, platform=platform)
+        else:
+            device = Device("new_device", os=nos)
 
         device.custom.setdefault("abstraction", {})["order"] = ["os"]
         device.cli = AttrDict({"execute": None})
@@ -166,11 +176,11 @@ def parse_genie(cli_output, command=None, os=None, generic_tabular=False, generi
         # so we will try to parse both.
         if os == "ios":
             try:
-                return _parse(cli_output, command, "ios")
+                return _parse(cli_output, command, "ios", platform)
             except Exception:
-                return _parse(cli_output, command, "iosxe")
+                return _parse(cli_output, command, "iosxe", platform)
         else:
-            return _parse(cli_output, command, os)
+            return _parse(cli_output, command, os, platform)
 
 
 class FilterModule(object):
