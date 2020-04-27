@@ -102,10 +102,11 @@ def parse_genie(cli_output,
         # tb = Testbed()
         if platform:
             device = Device("new_device", os=nos, platform=platform)
+            device.custom.setdefault("abstraction", {})["order"] = ["os", "platform"]
         else:
             device = Device("new_device", os=nos)
+            device.custom.setdefault("abstraction", {})["order"] = ["os"]
 
-        device.custom.setdefault("abstraction", {})["order"] = ["os"]
         device.cli = AttrDict({"execute": None})
 
         # User input checking of the command provided. Does the command have a Genie parser?
