@@ -93,6 +93,10 @@ Converting CLI output of the `show version` command from a Cisco IOS-XE device t
 
     {{ cli_output | parse_genie(command='show version', os='iosxe') }}
 
+For deeper abstraction, you might want to add `platform` to `parse_genie`.
+
+    {{ cli_output | parse_genie(command='show version', os='iosxe', platform='asr1k') }}
+
 The above example would yield the following:
 
     {
