@@ -56,7 +56,7 @@ def parse_genie(cli_output,
 
     # Does the user have the necessary packages installed in order to use this filter?
     if not HAS_GENIE:
-        raise AnsibleFilterError("parse_genie: Genie package is not installed. To install, run 'pip install genie'.")
+        raise AnsibleFilterError("parse_genie: pyATS package is not installed. To install, run 'pip install pyats'.")
 
     if not HAS_PYATS:
         raise AnsibleFilterError("parse_genie: pyATS package is not installed. To install, run 'pip install pyats'.")
