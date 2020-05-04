@@ -15,8 +15,11 @@ install:
   # Install ansible
   - pip install ansible
 
-  # Install Genie
+  # Install pyATS
   - pip install pyats
+
+  # Install Genie
+  - pip install genie
 
   # Install yamllint
   - pip install yamllint
