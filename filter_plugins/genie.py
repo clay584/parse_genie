@@ -120,8 +120,7 @@ def parse_genie(cli_output,
             )
 
         try:
-            parsed_output = device.parse(cmd, output=raw_cli_output)
-            return parsed_output
+            return device.parse(cmd, output=raw_cli_output)
         except Exception as e:
             raise AnsibleFilterError(
                 "parse_genie: {0} - Failed to parse command output.".format(
